@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const auth_1 = require("./routes/auth");
 const shipments_1 = require("./routes/shipments");
@@ -46,6 +47,20 @@ app.use('/api/activity', activity_1.activityRouter);
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+// Serve frontend (if built)
+const clientPath = path_1.default.join(__dirname, '..', '..', 'frontend', 'dist');
+if (fs_1.default.existsSync(clientPath)) {
+    app.use(express_1.default.static(clientPath));
+    // All other non-API routes should serve the frontend's index.html
+    app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api') || req.path.startsWith('/uploads'))
+            return next();
+        res.sendFile(path_1.default.join(clientPath, 'index.html'));
+    });
+}
+else {
+    console.warn(`Frontend build not found at ${clientPath}. Visit /api routes only.`);
+}
 // Error handler (must be last)
 app.use(errorHandler_1.errorHandler);
 app.listen(PORT, () => {
