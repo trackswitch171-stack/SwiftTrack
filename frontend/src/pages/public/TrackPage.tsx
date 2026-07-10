@@ -68,7 +68,7 @@ export default function TrackPage() {
                                     type="text"
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
-                                    placeholder="e.g. TRK-AU-2026-000001"
+                                    placeholder="Enter your tracking number"
                                     className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 shadow-lg font-medium"
                                 />
                             </div>
@@ -109,20 +109,12 @@ export default function TrackPage() {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">Shipment Not Found</h3>
                             <p className="text-gray-500 mb-6">
-                                We couldn't find a shipment with tracking number <strong>{searchValue}</strong>.<br />
-                                Please check your tracking number and try again.
+                                We couldn't find a shipment with that tracking number.<br />
+                                Please double-check the number from your shipment confirmation and try again.
                             </p>
                             <div className="bg-blue-50 rounded-xl p-4 text-left text-sm text-blue-700">
-                                <p className="font-semibold mb-1">Try these sample tracking numbers:</p>
-                                {['TRK-AU-2026-000001', 'TRK-UK-2026-000002', 'TRK-US-2026-000003'].map((tn) => (
-                                    <button
-                                        key={tn}
-                                        onClick={() => { setInputValue(tn); setSearchValue(tn); navigate(`/track/${tn}`); }}
-                                        className="block text-[#0B3D91] hover:underline font-mono mt-1"
-                                    >
-                                        {tn}
-                                    </button>
-                                ))}
+                                <p className="font-semibold mb-1">Need help?</p>
+                                <p>Use the tracking number from your shipment confirmation email or ask the sender for the correct code.</p>
                             </div>
                         </div>
                     </motion.div>

@@ -168,7 +168,7 @@ export default function HomePage() {
                                         <Package className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                         <input
                                             type="text"
-                                            placeholder="Enter tracking number (e.g. TRK-AU-2026-000001)"
+                                            placeholder="Enter your tracking number"
                                             value={trackingInput}
                                             onChange={(e) => setTrackingInput(e.target.value)}
                                             className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 shadow-lg text-sm font-medium"
@@ -185,7 +185,7 @@ export default function HomePage() {
                                     </motion.button>
                                 </div>
                                 <p className="text-white/50 text-xs mt-2 ml-1">
-                                    Try: TRK-AU-2026-000001
+                                    Use your own tracking number from the shipment confirmation.
                                 </p>
                             </form>
 
@@ -220,7 +220,7 @@ export default function HomePage() {
                                                 <Package className="w-5 h-5 text-white" />
                                             </div>
                                             <div>
-                                                <p className="text-white font-semibold text-sm">TRK-AU-2026-000001</p>
+                                                <p className="text-white font-semibold text-sm">TRK-XX-2026-000001</p>
                                                 <p className="text-white/60 text-xs">Express Shipment</p>
                                             </div>
                                         </div>

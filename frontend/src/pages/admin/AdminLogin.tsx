@@ -17,12 +17,7 @@ export default function AdminLogin() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
-        defaultValues: {
-            email: 'admin@swifttrack.com',
-            password: 'swifttrack123',
-        },
-    });
+    const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
 
     if (isAuthenticated) return <Navigate to="/admin/dashboard" replace />;
 
@@ -84,7 +79,7 @@ export default function AdminLogin() {
                                         pattern: { value: /\S+@\S+\.\S+/, message: 'Invalid email' },
                                     })}
                                     type="email"
-                                    placeholder="admin@swifttrack.com"
+                                    placeholder="Enter your admin email"
                                     className={`input-field pl-11 ${errors.email ? 'border-red-500' : ''}`}
                                 />
                             </div>
