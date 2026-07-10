@@ -39,7 +39,7 @@ export default function AdminCreateShipment() {
             </div>
 
             <ShipmentForm
-                onSubmit={mutation.mutateAsync}
+                onSubmit={async (data) => { await mutation.mutateAsync(data); }}
                 isLoading={mutation.isPending}
                 submitLabel="Create Shipment"
             />

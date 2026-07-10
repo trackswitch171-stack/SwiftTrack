@@ -73,7 +73,7 @@ export default function AdminEditShipment() {
 
             <ShipmentForm
                 defaultValues={defaultValues}
-                onSubmit={mutation.mutateAsync}
+                onSubmit={async (data) => { await mutation.mutateAsync(data); }}
                 isLoading={mutation.isPending}
                 submitLabel="Save Changes"
                 isEdit
