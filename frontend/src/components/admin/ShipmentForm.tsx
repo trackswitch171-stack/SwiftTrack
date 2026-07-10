@@ -17,6 +17,8 @@ interface ShipmentFormData {
     receiverCity: string;
     receiverCountry: string;
     shipmentType: string;
+    transportMode: string;
+    containsPets: boolean;
     weight: string;
     weightUnit: string;
     dimensions: string;
@@ -120,6 +122,8 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
         defaultValues: defaultValues || {
             weightUnit: 'kg',
             shipmentType: 'package',
+            transportMode: 'land',
+            containsPets: false,
             serviceType: 'standard',
             priority: 'normal',
             currency: 'USD',
@@ -247,6 +251,23 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
                         <option value="parcel">🎁 Parcel</option>
                         <option value="pallet">🏗 Pallet</option>
                         <option value="freight">🚚 Freight</option>
+                        <option value="pet">🐾 Pet Shipment</option>
+                    </select>
+                </Field>
+
+                <Field label="Transport Mode">
+                    <select {...register('transportMode')} className={selectCls}>
+                        <option value="land">Land</option>
+                        <option value="air">Air</option>
+                        <option value="sea">Sea</option>
+                        <option value="rail">Rail</option>
+                    </select>
+                </Field>
+
+                <Field label="Contains Pets">
+                    <select {...register('containsPets')} className={selectCls}>
+                        <option value={false}>No</option>
+                        <option value={true}>Yes</option>
                     </select>
                 </Field>
 

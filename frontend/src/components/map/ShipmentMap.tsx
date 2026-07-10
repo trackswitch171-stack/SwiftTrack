@@ -128,6 +128,24 @@ function distanceKm(a: [number, number], b: [number, number]): number {
     return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
+function getRouteStyle(mode: string) {
+    if (mode === 'air') {
+        return { color: '#f97316', weight: 4, opacity: 0.85, dashArray: '8 8', lineCap: 'round' };
+    }
+    if (mode === 'sea') {
+        return { color: '#0ea5e9', weight: 4, opacity: 0.75, dashArray: '4 8', lineCap: 'round' };
+    }
+    return { color: '#2563EB', weight: 4, opacity: 0.95, dashArray: '0', lineCap: 'round' };
+}
+
+function getRouteLabel(mode: string, usedRoads: boolean) {
+    if (mode === 'air') return 'Air route';
+    if (mode === 'sea') return 'Sea route';
+    if (mode === 'rail') return 'Rail route';
+    if (mode === 'land') return usedRoads ? 'Road route' : 'Land path';
+    return 'Route';
+}
+
 // ── Component ────────────────────────────────────────────
 export default function ShipmentMap({ shipment }: Props) {
     const mapRef = useRef<HTMLDivElement>(null);
@@ -137,7 +155,7 @@ export default function ShipmentMap({ shipment }: Props) {
     const satLabelsRef = useRef<L.TileLayer | null>(null);
 
     const [isSatellite, setIsSatellite] = useState(false);
-    const [routeType, setRouteType] = useState<'road' | 'arc' | null>(null);
+    const [routeType, setRouteType] = useState<string | null>(null);
 
     // ── Satellite toggle (no map rebuild) ───────────────
     const toggleSatellite = useCallback(() => {
@@ -245,11 +263,12 @@ export default function ShipmentMap({ shipment }: Props) {
         (async () => {
             const allCoords: [number, number][] = [];
             let usedRoads = false;
+            const mode = shipment.transportMode || 'land';
 
             for (let i = 0; i < waypoints.length - 1; i++) {
                 const from = waypoints[i], to = waypoints[i + 1];
                 let seg: [number, number][] | null = null;
-                if (distanceKm(from, to) < 2500) {
+                if (mode === 'land' && distanceKm(from, to) < 2500) {
                     seg = await fetchRoadRoute(from, to);
                     if (seg) usedRoads = true;
                 }
@@ -272,14 +291,35 @@ export default function ShipmentMap({ shipment }: Props) {
 
             const travelled = allCoords.slice(0, currentIdx + 1);
             const remaining = allCoords.slice(currentIdx);
+            const routeStyle = getRouteStyle(shipment.transportMode || 'land');
+            const routeLabel = getRouteLabel(shipment.transportMode || 'land', usedRoads);
 
             if (remaining.length >= 2)
-                L.polyline(remaining, { color: '#94a3b8', weight: 3, opacity: 0.6, dashArray: '8 6' })
+                L.polyline(remaining, { ...routeStyle, opacity: 0.5 })
                     .addTo(leafletMap.current);
 
             if (travelled.length >= 2) {
-                L.polyline(travelled, { color: '#2563EB', weight: 4, opacity: 0.9 })
+                L.polyline(travelled, routeStyle)
                     .addTo(leafletMap.current);
+
+                const step = Math.max(1, Math.floor(travelled.length / 7));
+                for (let i = step; i < travelled.length - 1; i += step) {
+                    const [lat1, lng1] = travelled[i];
+                    const [lat2, lng2] = travelled[i + 1];
+                    const angle = (Math.atan2(lat2 - lat1, lng2 - lng1) * 180) / Math.PI;
+                    L.marker([lat1, lng1], {
+                        icon: L.divIcon({
+                            className: '',
+                            html: `<div style="width:16px;height:16px;transform:rotate(${-angle + 90}deg);color:${routeStyle.color};font-size:16px;line-height:1">▲</div>`,
+                            iconSize: [16, 16],
+                            iconAnchor: [8, 8],
+                        }),
+                        interactive: false,
+                    }).addTo(leafletMap.current!);
+                }
+            }
+
+            if (!cancelled) setRouteType(routeLabel);
 
                 const step = Math.max(1, Math.floor(travelled.length / 7));
                 for (let i = step; i < travelled.length - 1; i += step) {
@@ -320,7 +360,7 @@ export default function ShipmentMap({ shipment }: Props) {
                     {routeType && (
                         <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
                             <Navigation className="w-3.5 h-3.5" />
-                            <span>{routeType === 'road' ? 'Road directions' : 'Flight path'}</span>
+                            <span>{routeType}</span>
                         </div>
                     )}
                     <div className="hidden sm:flex gap-3 text-xs text-gray-500">

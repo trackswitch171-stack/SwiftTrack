@@ -262,6 +262,8 @@ export default function AdminShipmentDetail() {
                         <dl className="space-y-2.5 text-sm">
                             {[
                                 { l: 'Type', v: shipment.shipmentType },
+                                { l: 'Transport', v: shipment.transportMode ? shipment.transportMode.charAt(0).toUpperCase() + shipment.transportMode.slice(1) : 'Land' },
+                                { l: 'Pets Included', v: shipment.containsPets ? 'Yes' : 'No' },
                                 { l: 'Weight', v: `${shipment.weight} ${shipment.weightUnit}` },
                                 { l: 'Service', v: shipment.serviceType },
                                 { l: 'Priority', v: shipment.priority },

@@ -84,6 +84,8 @@ model Shipment {
   // Service
   serviceType      String?  @default("standard")
   priority         String?  @default("normal")
+  transportMode    String?  @default("land")
+  containsPets     Boolean  @default(false)
   
   trackingUpdates  TrackingUpdate[]
   pendingUpdates   PendingUpdate[]

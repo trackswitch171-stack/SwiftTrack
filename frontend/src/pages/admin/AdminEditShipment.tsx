@@ -51,6 +51,8 @@ export default function AdminEditShipment() {
         originLng: shipment.originLng ? String(shipment.originLng) : '',
         destinationLat: shipment.destinationLat ? String(shipment.destinationLat) : '',
         destinationLng: shipment.destinationLng ? String(shipment.destinationLng) : '',
+        transportMode: shipment.transportMode || 'land',
+        containsPets: shipment.containsPets || false,
         estimatedDelivery: shipment.estimatedDelivery
             ? new Date(shipment.estimatedDelivery).toISOString().slice(0, 16)
             : '',

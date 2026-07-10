@@ -283,6 +283,8 @@ export default function TrackPage() {
                                         <dl className="space-y-3 text-sm">
                                             {[
                                                 { label: 'Type', value: shipment.shipmentType },
+                                                { label: 'Transport', value: shipment.transportMode ? shipment.transportMode.charAt(0).toUpperCase() + shipment.transportMode.slice(1) : 'Land' },
+                                                { label: 'Pets Included', value: shipment.containsPets ? 'Yes' : 'No' },
                                                 { label: 'Weight', value: `${shipment.weight} ${shipment.weightUnit}` },
                                                 { label: 'Service', value: shipment.serviceType || 'Standard' },
                                                 { label: 'Priority', value: shipment.priority || 'Normal' },

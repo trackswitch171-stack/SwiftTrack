@@ -15,6 +15,8 @@ export interface Shipment {
     receiverCity: string;
     receiverCountry: string;
     shipmentType: string;
+    transportMode?: 'land' | 'air' | 'sea' | 'rail';
+    containsPets?: boolean;
     weight: number;
     weightUnit: string;
     dimensions?: string;
