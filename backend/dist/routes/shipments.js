@@ -6,6 +6,7 @@ const prisma_1 = require("../lib/prisma");
 const auth_1 = require("../middleware/auth");
 const trackingNumber_1 = require("../utils/trackingNumber");
 const activityLogger_1 = require("../utils/activityLogger");
+const email_1 = require("../utils/email");
 exports.shipmentsRouter = (0, express_1.Router)();
 // GET /api/shipments/track/:trackingNumber - Public route
 exports.shipmentsRouter.get('/track/:trackingNumber', async (req, res) => {
@@ -166,6 +167,42 @@ exports.shipmentsRouter.post('/', async (req, res) => {
                 approvedAt: new Date(),
             },
         });
+        const frontendBaseUrl = (process.env.FRONTEND_URL || 'https://track.swifttrackpro.com').replace(/\/$/, '');
+        const trackingUrl = `${frontendBaseUrl}/track/${trackingNumber}`;
+        const recipients = [
+            {
+                email: data.senderEmail,
+                name: data.senderName,
+                role: 'Sender',
+            },
+            {
+                email: data.receiverEmail,
+                name: data.receiverName,
+                role: 'Receiver',
+            },
+        ];
+        for (const recipient of recipients) {
+            if (!recipient.email)
+                continue;
+            const { subject, html, text } = (0, email_1.getShipmentCreatedEmail)({
+                recipientName: recipient.name || recipient.role,
+                trackingNumber,
+                originCity: data.originCity,
+                originCountry: data.originCountry,
+                destinationCity: data.destinationCity,
+                destinationCountry: data.destinationCountry,
+                estimatedDelivery: shipment.estimatedDelivery ? shipment.estimatedDelivery.toISOString().split('T')[0] : null,
+                trackingUrl,
+            });
+            (0, email_1.sendMail)({
+                to: recipient.email,
+                subject,
+                html,
+                text,
+            }).catch(error => {
+                console.error(`Failed to send shipment notification email to ${recipient.email}:`, error);
+            });
+        }
         await (0, activityLogger_1.logActivity)({
             adminId: req.admin.id,
             action: 'CREATE_SHIPMENT',

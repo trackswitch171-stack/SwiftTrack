@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { generateTrackingNumber } from '../utils/trackingNumber';
 import { logActivity } from '../utils/activityLogger';
+import { sendMail, getShipmentCreatedEmail } from '../utils/email';
 
 export const shipmentsRouter = Router();
 
@@ -187,6 +188,46 @@ shipmentsRouter.post('/', async (req: AuthRequest, res: Response): Promise<void>
                 approvedAt: new Date(),
             },
         });
+
+        const frontendBaseUrl = (process.env.FRONTEND_URL || 'https://track.swifttrackpro.com').replace(/\/$/, '');
+        const trackingUrl = `${frontendBaseUrl}/track/${trackingNumber}`;
+
+        const recipients = [
+            {
+                email: data.senderEmail,
+                name: data.senderName,
+                role: 'Sender',
+            },
+            {
+                email: data.receiverEmail,
+                name: data.receiverName,
+                role: 'Receiver',
+            },
+        ];
+
+        for (const recipient of recipients) {
+            if (!recipient.email) continue;
+
+            const { subject, html, text } = getShipmentCreatedEmail({
+                recipientName: recipient.name || recipient.role,
+                trackingNumber,
+                originCity: data.originCity,
+                originCountry: data.originCountry,
+                destinationCity: data.destinationCity,
+                destinationCountry: data.destinationCountry,
+                estimatedDelivery: shipment.estimatedDelivery ? shipment.estimatedDelivery.toISOString().split('T')[0] : null,
+                trackingUrl,
+            });
+
+            sendMail({
+                to: recipient.email,
+                subject,
+                html,
+                text,
+            }).catch(error => {
+                console.error(`Failed to send shipment notification email to ${recipient.email}:`, error);
+            });
+        }
 
         await logActivity({
             adminId: req.admin!.id,
