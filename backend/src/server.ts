@@ -16,6 +16,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '13.49.243.241';
 
 // Deployment diagnostics (helpful when troubleshooting remote login failures)
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(o => o.trim());
@@ -84,8 +85,8 @@ if (fs.existsSync(clientPath)) {
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-    console.log(`🚀 TrackMaster API running on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`🚀 TrackMaster API running on http://${HOST}:${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV}`);
 });
 

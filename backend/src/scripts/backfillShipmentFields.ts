@@ -3,24 +3,24 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Starting backfill: set transportMode and containsPets defaults');
+    console.log('Starting backfill: set transportMode and containsPets defaults');
 
-  const result = await prisma.shipment.updateMany({
-    // Update all existing shipments to ensure fields exist and have sensible defaults
-    data: {
-      transportMode: 'land',
-      containsPets: false,
-    },
-  });
+    const result = await prisma.shipment.updateMany({
+        // Update all existing shipments to ensure fields exist and have sensible defaults
+        data: {
+            transportMode: 'land',
+            containsPets: false,
+        },
+    });
 
-  console.log(`Updated ${result.count} shipment(s)`);
+    console.log(`Updated ${result.count} shipment(s)`);
 }
 
 main()
-  .catch((e) => {
-    console.error('Backfill failed', e);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+    .catch((e) => {
+        console.error('Backfill failed', e);
+        process.exitCode = 1;
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });
