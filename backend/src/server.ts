@@ -15,11 +15,20 @@ import { prisma } from './lib/prisma';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT || 5000);
 const HOST = process.env.HOST || '13.49.243.241';
 
+const configuredOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(o => o.trim()).filter(Boolean);
+const derivedOrigins = [
+    `http://${HOST}`,
+    `https://${HOST}`,
+    `http://${HOST}:80`,
+    `https://${HOST}:443`,
+    `http://${HOST}:5000`,
+].filter(Boolean);
+const allowedOrigins = Array.from(new Set([...configuredOrigins, ...derivedOrigins]));
+
 // Deployment diagnostics (helpful when troubleshooting remote login failures)
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(o => o.trim());
 console.log('▶ Allowed CORS origins:', allowedOrigins);
 console.log('▶ NODE_ENV:', process.env.NODE_ENV);
 console.log('▶ JWT_SECRET set:', !!process.env.JWT_SECRET);
@@ -28,14 +37,16 @@ console.log('▶ DATABASE_URL set:', !!process.env.DATABASE_URL);
 // Middleware
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, etc.)
+        // Allow requests with no origin (mobile apps, curl, server-to-server)
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            console.warn('CORS blocked origin:', origin);
             callback(new Error(`CORS blocked: ${origin}`));
         }
     },
     credentials: true,
+    optionsSuccessStatus: 204,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -96,8 +107,9 @@ app.listen(PORT, HOST, () => {
         const t1 = Date.now();
         await prisma.$connect();
         console.log(`Prisma warm-up connected in ${Date.now() - t1}ms`);
-    } catch (err) {
-        console.warn('Prisma warm-up failed:', err?.message || err);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : JSON.stringify(err);
+        console.warn('Prisma warm-up failed:', message);
     }
 })();
 

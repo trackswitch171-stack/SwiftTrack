@@ -15,22 +15,39 @@ const dashboard_1 = require("./routes/dashboard");
 const activity_1 = require("./routes/activity");
 const errorHandler_1 = require("./middleware/errorHandler");
 const requestLogger_1 = require("./middleware/requestLogger");
+const prisma_1 = require("./lib/prisma");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT || 5000);
+const HOST = process.env.HOST || '13.49.243.241';
+const configuredOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(o => o.trim()).filter(Boolean);
+const derivedOrigins = [
+    `http://${HOST}`,
+    `https://${HOST}`,
+    `http://${HOST}:80`,
+    `https://${HOST}:443`,
+    `http://${HOST}:5000`,
+].filter(Boolean);
+const allowedOrigins = Array.from(new Set([...configuredOrigins, ...derivedOrigins]));
+// Deployment diagnostics (helpful when troubleshooting remote login failures)
+console.log('▶ Allowed CORS origins:', allowedOrigins);
+console.log('▶ NODE_ENV:', process.env.NODE_ENV);
+console.log('▶ JWT_SECRET set:', !!process.env.JWT_SECRET);
+console.log('▶ DATABASE_URL set:', !!process.env.DATABASE_URL);
 // Middleware
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(o => o.trim());
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, etc.)
+        // Allow requests with no origin (mobile apps, curl, server-to-server)
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         }
         else {
+            console.warn('CORS blocked origin:', origin);
             callback(new Error(`CORS blocked: ${origin}`));
         }
     },
     credentials: true,
+    optionsSuccessStatus: 204,
 }));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
@@ -46,6 +63,17 @@ app.use('/api/activity', activity_1.activityRouter);
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+// Debug information for deployment diagnostics
+app.get('/api/debug', (req, res) => {
+    res.json({
+        status: 'debug',
+        allowedOrigins,
+        nodeEnv: process.env.NODE_ENV || null,
+        jwtSecretSet: !!process.env.JWT_SECRET,
+        databaseUrlSet: !!process.env.DATABASE_URL,
+        timestamp: new Date().toISOString(),
+    });
 });
 // Serve frontend (if built)
 const clientPath = path_1.default.join(__dirname, '..', '..', 'frontend', 'dist');
@@ -63,9 +91,21 @@ else {
 }
 // Error handler (must be last)
 app.use(errorHandler_1.errorHandler);
-app.listen(PORT, () => {
-    console.log(`🚀 TrackMaster API running on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`🚀 TrackMaster API running on http://${HOST}:${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV}`);
 });
+// Warm up Prisma client to avoid first-request latency
+(async () => {
+    try {
+        const t1 = Date.now();
+        await prisma_1.prisma.$connect();
+        console.log(`Prisma warm-up connected in ${Date.now() - t1}ms`);
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : JSON.stringify(err);
+        console.warn('Prisma warm-up failed:', message);
+    }
+})();
 exports.default = app;
 //# sourceMappingURL=server.js.map

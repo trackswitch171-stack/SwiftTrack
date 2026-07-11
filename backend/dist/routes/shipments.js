@@ -147,6 +147,8 @@ exports.shipmentsRouter.post('/', async (req, res) => {
                 currency: data.currency || 'USD',
                 serviceType: data.serviceType || 'standard',
                 priority: data.priority || 'normal',
+                transportMode: data.transportMode || 'land',
+                containsPets: data.containsPets === true || data.containsPets === 'true',
             },
         });
         // Create initial tracking update
@@ -199,10 +201,20 @@ exports.shipmentsRouter.put('/:id', async (req, res) => {
                 receiverCity: data.receiverCity,
                 receiverCountry: data.receiverCountry,
                 shipmentType: data.shipmentType,
+                transportMode: data.transportMode,
+                containsPets: data.containsPets === true || data.containsPets === 'true',
                 weight: data.weight ? parseFloat(data.weight) : undefined,
                 weightUnit: data.weightUnit,
                 dimensions: data.dimensions,
                 description: data.description,
+                originCity: data.originCity,
+                originCountry: data.originCountry,
+                originLat: data.originLat ? parseFloat(data.originLat) : undefined,
+                originLng: data.originLng ? parseFloat(data.originLng) : undefined,
+                destinationCity: data.destinationCity,
+                destinationCountry: data.destinationCountry,
+                destinationLat: data.destinationLat ? parseFloat(data.destinationLat) : undefined,
+                destinationLng: data.destinationLng ? parseFloat(data.destinationLng) : undefined,
                 estimatedDelivery: data.estimatedDelivery ? new Date(data.estimatedDelivery) : undefined,
                 declaredValue: data.declaredValue ? parseFloat(data.declaredValue) : undefined,
                 currency: data.currency,
@@ -221,19 +233,15 @@ exports.shipmentsRouter.put('/:id', async (req, res) => {
         });
         res.json(shipment);
     }
-    catch {
+    catch (err) {
+        console.error(err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 // DELETE /api/shipments/:id - Delete shipment
 exports.shipmentsRouter.delete('/:id', async (req, res) => {
     try {
-        const shipment = await prisma_1.prisma.shipment.findUnique({ where: { id: req.params.id } });
-        if (!shipment) {
-            res.status(404).json({ error: 'Shipment not found' });
-            return;
-        }
-        await prisma_1.prisma.shipment.delete({ where: { id: req.params.id } });
+        const shipment = await prisma_1.prisma.shipment.delete({ where: { id: req.params.id } });
         await (0, activityLogger_1.logActivity)({
             adminId: req.admin.id,
             action: 'DELETE_SHIPMENT',

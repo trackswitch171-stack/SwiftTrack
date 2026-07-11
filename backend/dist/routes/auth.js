@@ -21,13 +21,15 @@ exports.authRouter.post('/login', async (req, res) => {
         }
         const normalizedEmail = String(email).trim().toLowerCase();
         const normalizedPassword = String(password).trim();
+        console.log(`Login attempt for=${normalizedEmail} from=${req.ip} user-agent=${req.get('user-agent')}`);
         let admin = await prisma_1.prisma.admin.findUnique({ where: { email: normalizedEmail } });
         const isDefaultAdminLogin = normalizedEmail === 'admin@swifttrack.com' && normalizedPassword === 'swifttrack123';
         if (!admin && isDefaultAdminLogin) {
-            const existingAdmin = await prisma_1.prisma.admin.findUnique({ where: { email: 'trackswitch171@gmail.com' } })
-                ?? await prisma_1.prisma.admin.findFirst({ orderBy: { createdAt: 'asc' } });
+            // If no admin exists with the default email, reuse the first admin if present
+            // This reduces multiple DB queries and speeds up the default-login path.
+            const existingAdmin = await prisma_1.prisma.admin.findFirst();
+            const hashedPassword = await bcryptjs_1.default.hash(normalizedPassword, 10);
             if (existingAdmin) {
-                const hashedPassword = await bcryptjs_1.default.hash(normalizedPassword, 12);
                 admin = await prisma_1.prisma.admin.update({
                     where: { id: existingAdmin.id },
                     data: {
@@ -39,7 +41,6 @@ exports.authRouter.post('/login', async (req, res) => {
                 });
             }
             else {
-                const hashedPassword = await bcryptjs_1.default.hash(normalizedPassword, 12);
                 admin = await prisma_1.prisma.admin.create({
                     data: {
                         email: normalizedEmail,
@@ -60,7 +61,8 @@ exports.authRouter.post('/login', async (req, res) => {
             return;
         }
         if (!valid && isDefaultAdminLogin) {
-            const hashedPassword = await bcryptjs_1.default.hash(normalizedPassword, 12);
+            // Re-hash with reasonable cost if default-login used; lower rounds to 10 for speed
+            const hashedPassword = await bcryptjs_1.default.hash(normalizedPassword, 10);
             admin = await prisma_1.prisma.admin.update({
                 where: { id: admin.id },
                 data: { password: hashedPassword },
@@ -71,6 +73,11 @@ exports.authRouter.post('/login', async (req, res) => {
             return;
         }
         const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            console.error('JWT signing failed: JWT_SECRET is not set');
+            res.status(500).json({ error: 'Server authentication misconfigured' });
+            return;
+        }
         const expiresIn = (process.env.JWT_EXPIRES_IN || '7d');
         const signOptions = {
             expiresIn,
