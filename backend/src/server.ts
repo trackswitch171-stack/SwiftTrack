@@ -46,17 +46,30 @@ const corsOptions = {
             return;
         }
 
-        // Allow any subdomain of swifttrack.com or swifttrackpro.com
+        // Allow any subdomain of swifttrack.com or swifttrackpro.com.
+        // Use URL parsing to extract hostname so origins with ports are handled.
         try {
-            const lower = origin.toLowerCase();
-            const allowedSuffixes = ['.swifttrack.com', 'swifttrack.com', '.swifttrackpro.com', 'swifttrackpro.com'];
-            if (allowedSuffixes.some(suf => lower.endsWith(suf))) {
-                console.log('CORS allow by domain-match:', origin);
+            const parsed = new URL(origin);
+            const hostname = parsed.hostname.toLowerCase();
+            const allowedHostSuffixes = ['swifttrack.com', 'swifttrackpro.com'];
+            if (allowedHostSuffixes.some(suf => hostname === suf || hostname.endsWith('.' + suf))) {
+                console.log('CORS allow by domain-match (hostname):', hostname, 'origin:', origin);
                 callback(null, true);
                 return;
             }
         } catch (e) {
-            // fall through to block
+            // If URL parsing fails, fall back to simple string check
+            try {
+                const lower = origin.toLowerCase();
+                const allowedSuffixes = ['.swifttrack.com', 'swifttrack.com', '.swifttrackpro.com', 'swifttrackpro.com'];
+                if (allowedSuffixes.some(suf => lower.endsWith(suf))) {
+                    console.log('CORS allow by fallback domain-match:', origin);
+                    callback(null, true);
+                    return;
+                }
+            } catch (e2) {
+                // fall through to block
+            }
         }
 
         console.warn('CORS blocked origin:', origin);
