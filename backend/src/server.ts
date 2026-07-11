@@ -40,12 +40,26 @@ console.log('▶ DATABASE_URL set:', !!process.env.DATABASE_URL);
 // Middleware
 const corsOptions = {
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        // Allow when no origin (server-to-server) or explicit whitelist
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
-        } else {
-            console.warn('CORS blocked origin:', origin);
-            callback(new Error(`CORS blocked: ${origin}`));
+            return;
         }
+
+        // Allow any subdomain of swifttrack.com (useful for hosted domains like track.swifttrack.com)
+        try {
+            const lower = origin.toLowerCase();
+            if (lower.endsWith('.swifttrack.com') || lower.endsWith('swifttrack.com')) {
+                console.log('CORS allow by domain-match:', origin);
+                callback(null, true);
+                return;
+            }
+        } catch (e) {
+            // fall through to block
+        }
+
+        console.warn('CORS blocked origin:', origin);
+        callback(new Error(`CORS blocked: ${origin}`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
