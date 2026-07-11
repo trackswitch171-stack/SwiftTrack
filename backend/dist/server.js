@@ -35,9 +35,8 @@ console.log('▶ NODE_ENV:', process.env.NODE_ENV);
 console.log('▶ JWT_SECRET set:', !!process.env.JWT_SECRET);
 console.log('▶ DATABASE_URL set:', !!process.env.DATABASE_URL);
 // Middleware
-app.use((0, cors_1.default)({
+const corsOptions = {
     origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, server-to-server)
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         }
@@ -47,8 +46,12 @@ app.use((0, cors_1.default)({
         }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     optionsSuccessStatus: 204,
-}));
+};
+app.use((0, cors_1.default)(corsOptions));
+app.options('*', (0, cors_1.default)(corsOptions));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
 app.use(requestLogger_1.requestLogger);
