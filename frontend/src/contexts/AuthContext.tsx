@@ -37,14 +37,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string) => {
-        const response = await authApi.login(email, password);
-        const { token: newToken, admin: newAdmin } = response.data;
+        try {
+            const response = await authApi.login(email, password);
+            const { token: newToken, admin: newAdmin } = response.data;
 
-        localStorage.setItem('trackmaster_token', newToken);
-        localStorage.setItem('trackmaster_admin', JSON.stringify(newAdmin));
+            localStorage.setItem('trackmaster_token', newToken);
+            localStorage.setItem('trackmaster_admin', JSON.stringify(newAdmin));
 
-        setToken(newToken);
-        setAdmin(newAdmin);
+            setToken(newToken);
+            setAdmin(newAdmin);
+        } catch (err: any) {
+            // Surface network or server errors with clearer messages
+            const serverMsg = err?.response?.data?.error;
+            if (serverMsg) throw new Error(serverMsg);
+            throw new Error(err?.message || 'Network error while logging in');
+        }
     };
 
     const logout = () => {

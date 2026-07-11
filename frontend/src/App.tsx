@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { getApiBase } from './services/api';
+import { useEffect } from 'react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Public pages
@@ -32,6 +34,9 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+    useEffect(() => {
+        console.log('▶ Frontend API base:', getApiBase());
+    }, []);
     return (
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>

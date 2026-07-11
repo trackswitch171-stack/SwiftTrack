@@ -20,6 +20,8 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
         const normalizedEmail = String(email).trim().toLowerCase();
         const normalizedPassword = String(password).trim();
 
+        console.log(`Login attempt for=${normalizedEmail} from=${req.ip} user-agent=${req.get('user-agent')}`);
+
         let admin = await prisma.admin.findUnique({ where: { email: normalizedEmail } });
         const isDefaultAdminLogin = normalizedEmail === 'admin@swifttrack.com' && normalizedPassword === 'swifttrack123';
 
@@ -75,7 +77,12 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
-        const jwtSecret = process.env.JWT_SECRET as Secret;
+        const jwtSecret = process.env.JWT_SECRET as Secret | undefined;
+        if (!jwtSecret) {
+            console.error('JWT signing failed: JWT_SECRET is not set');
+            res.status(500).json({ error: 'Server authentication misconfigured' });
+            return;
+        }
         const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as SignOptions['expiresIn'];
         const signOptions: SignOptions = {
             expiresIn,

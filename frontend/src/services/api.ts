@@ -1,11 +1,16 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const rawBase = import.meta.env.VITE_API_URL || '/api';
+// Normalize base (strip trailing slash)
+const API_BASE = rawBase.replace(/\/$/, '');
 
 const api = axios.create({
     baseURL: API_BASE,
     headers: { 'Content-Type': 'application/json' },
 });
+
+// expose for debugging
+export function getApiBase() { return API_BASE; }
 
 // Request interceptor — attach token
 api.interceptors.request.use((config) => {
@@ -21,6 +26,7 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
+            console.warn('API returned 401 — clearing stored auth');
             localStorage.removeItem('trackmaster_token');
             localStorage.removeItem('trackmaster_admin');
             if (window.location.pathname.startsWith('/admin') && !window.location.pathname.includes('/login')) {

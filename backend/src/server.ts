@@ -16,8 +16,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Deployment diagnostics (helpful when troubleshooting remote login failures)
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(o => o.trim());
+console.log('▶ Allowed CORS origins:', allowedOrigins);
+console.log('▶ NODE_ENV:', process.env.NODE_ENV);
+console.log('▶ JWT_SECRET set:', !!process.env.JWT_SECRET);
+console.log('▶ DATABASE_URL set:', !!process.env.DATABASE_URL);
+
+// Middleware
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (mobile apps, curl, etc.)
@@ -46,6 +52,18 @@ app.use('/api/activity', activityRouter);
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Debug information for deployment diagnostics
+app.get('/api/debug', (req, res) => {
+    res.json({
+        status: 'debug',
+        allowedOrigins,
+        nodeEnv: process.env.NODE_ENV || null,
+        jwtSecretSet: !!process.env.JWT_SECRET,
+        databaseUrlSet: !!process.env.DATABASE_URL,
+        timestamp: new Date().toISOString(),
+    });
 });
 
 // Serve frontend (if built)
