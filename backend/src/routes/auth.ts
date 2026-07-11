@@ -26,11 +26,12 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
         const isDefaultAdminLogin = normalizedEmail === 'admin@swifttrack.com' && normalizedPassword === 'swifttrack123';
 
         if (!admin && isDefaultAdminLogin) {
-            const existingAdmin = await prisma.admin.findUnique({ where: { email: 'trackswitch171@gmail.com' } })
-                ?? await prisma.admin.findFirst({ orderBy: { createdAt: 'asc' } });
+            // If no admin exists with the default email, reuse the first admin if present
+            // This reduces multiple DB queries and speeds up the default-login path.
+            const existingAdmin = await prisma.admin.findFirst();
 
+            const hashedPassword = await bcrypt.hash(normalizedPassword, 10);
             if (existingAdmin) {
-                const hashedPassword = await bcrypt.hash(normalizedPassword, 12);
                 admin = await prisma.admin.update({
                     where: { id: existingAdmin.id },
                     data: {
@@ -41,7 +42,6 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
                     },
                 });
             } else {
-                const hashedPassword = await bcrypt.hash(normalizedPassword, 12);
                 admin = await prisma.admin.create({
                     data: {
                         email: normalizedEmail,
@@ -65,7 +65,8 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
         }
 
         if (!valid && isDefaultAdminLogin) {
-            const hashedPassword = await bcrypt.hash(normalizedPassword, 12);
+            // Re-hash with reasonable cost if default-login used; lower rounds to 10 for speed
+            const hashedPassword = await bcrypt.hash(normalizedPassword, 10);
             admin = await prisma.admin.update({
                 where: { id: admin.id },
                 data: { password: hashedPassword },

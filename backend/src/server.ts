@@ -10,6 +10,7 @@ import { dashboardRouter } from './routes/dashboard';
 import { activityRouter } from './routes/activity';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
+import { prisma } from './lib/prisma';
 
 dotenv.config();
 
@@ -87,5 +88,16 @@ app.listen(PORT, () => {
     console.log(`🚀 TrackMaster API running on http://localhost:${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV}`);
 });
+
+// Warm up Prisma client to avoid first-request latency
+(async () => {
+    try {
+        const t1 = Date.now();
+        await prisma.$connect();
+        console.log(`Prisma warm-up connected in ${Date.now() - t1}ms`);
+    } catch (err) {
+        console.warn('Prisma warm-up failed:', err?.message || err);
+    }
+})();
 
 export default app;
