@@ -257,13 +257,13 @@ export default function AdminShipmentDetail() {
                     <div className="card">
                         <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm">
                             <Package className="w-4 h-4 text-[#0B3D91]" />
-                            Details
+                            Shipment Details
                         </h3>
                         <dl className="space-y-2.5 text-sm">
                             {[
                                 { l: 'Type', v: shipment.shipmentType },
-                                { l: 'Transport', v: shipment.transportMode ? shipment.transportMode.charAt(0).toUpperCase() + shipment.transportMode.slice(1) : 'Land' },
-                                { l: 'Pets Included', v: shipment.containsPets ? 'Yes' : 'No' },
+                                { l: 'Transport Mode', v: shipment.transportMode ? shipment.transportMode.charAt(0).toUpperCase() + shipment.transportMode.slice(1) : 'Land' },
+                                { l: 'Pet Shipping', v: shipment.containsPets ? 'Yes' : 'No' },
                                 { l: 'Weight', v: `${shipment.weight} ${shipment.weightUnit}` },
                                 { l: 'Service', v: shipment.serviceType },
                                 { l: 'Priority', v: shipment.priority },

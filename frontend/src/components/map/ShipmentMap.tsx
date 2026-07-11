@@ -321,109 +321,106 @@ export default function ShipmentMap({ shipment }: Props) {
 
             if (!cancelled) setRouteType(routeLabel);
 
-                const step = Math.max(1, Math.floor(travelled.length / 7));
-                for (let i = step; i < travelled.length - 1; i += step) {
-                    const [lat1, lng1] = travelled[i];
-                    const [lat2, lng2] = travelled[i + 1];
-                    const angle = (Math.atan2(lat2 - lat1, lng2 - lng1) * 180) / Math.PI;
-                    L.marker([lat1, lng1], {
-                        icon: L.divIcon({
-                            className: '',
-                            html: `<div style="width:16px;height:16px;transform:rotate(${-angle + 90}deg);color:#2563EB;font-size:16px;line-height:1">▲</div>`,
-                            iconSize: [16, 16],
-                            iconAnchor: [8, 8],
-                        }),
-                        interactive: false,
-                    }).addTo(leafletMap.current!);
-                }
+            const step = Math.max(1, Math.floor(travelled.length / 7));
+            for (let i = step; i < travelled.length - 1; i += step) {
+                const [lat1, lng1] = travelled[i];
+                const [lat2, lng2] = travelled[i + 1];
+                const angle = (Math.atan2(lat2 - lat1, lng2 - lng1) * 180) / Math.PI;
+                L.marker([lat1, lng1], {
+                    icon: L.divIcon({
+                        className: '',
+                        html: `<div style="width:16px;height:16px;transform:rotate(${-angle + 90}deg);color:#2563EB;font-size:16px;line-height:1">▲</div>`,
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8],
+                    }),
+                    interactive: false,
+                }).addTo(leafletMap.current!);
             }
-
-            if (!cancelled) setRouteType(usedRoads ? 'road' : 'arc');
         })();
 
-        return () => {
-            cancelled = true;
-            map.remove();
-            leafletMap.current = null;
-        };
-    }, [shipment]);
+    return () => {
+        cancelled = true;
+        map.remove();
+        leafletMap.current = null;
+    };
+}, [shipment]);
 
-    return (
-        <div className="card overflow-hidden p-0">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-[#0B3D91]" />
-                    Live Shipment Route
-                </h3>
-                <div className="flex items-center gap-3">
-                    {routeType && (
-                        <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
-                            <Navigation className="w-3.5 h-3.5" />
-                            <span>{routeType}</span>
-                        </div>
-                    )}
-                    <div className="hidden sm:flex gap-3 text-xs text-gray-500">
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-[#0B3D91]" /><span>Origin</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-orange-500" /><span>Current</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-green-600" /><span>Destination</span>
-                        </div>
+return (
+    <div className="card overflow-hidden p-0">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
+                <Globe className="w-5 h-5 text-[#0B3D91]" />
+                Live Shipment Route
+            </h3>
+            <div className="flex items-center gap-3">
+                {routeType && (
+                    <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
+                        <Navigation className="w-3.5 h-3.5" />
+                        <span>{routeType}</span>
+                    </div>
+                )}
+                <div className="hidden sm:flex gap-3 text-xs text-gray-500">
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#0B3D91]" /><span>Origin</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500" /><span>Current</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-green-600" /><span>Destination</span>
                     </div>
                 </div>
             </div>
+        </div>
 
-            {/* Map container — button lives inside so it floats over the map */}
-            <div className="relative">
-                <div ref={mapRef} style={{ height: '480px', width: '100%' }} />
+        {/* Map container — button lives inside so it floats over the map */}
+        <div className="relative">
+            <div ref={mapRef} style={{ height: '480px', width: '100%' }} />
 
-                {/* Satellite / Street toggle button */}
-                <button
-                    onClick={toggleSatellite}
-                    title={isSatellite ? 'Switch to Street view' : 'Switch to Satellite view'}
-                    className={`
+            {/* Satellite / Street toggle button */}
+            <button
+                onClick={toggleSatellite}
+                title={isSatellite ? 'Switch to Street view' : 'Switch to Satellite view'}
+                className={`
                         absolute top-3 right-3 z-[1000]
                         flex items-center gap-2 px-3 py-2 rounded-xl
                         text-xs font-semibold shadow-lg
                         border transition-all duration-200
                         ${isSatellite
-                            ? 'bg-white text-[#0B3D91] border-blue-200 hover:bg-blue-50'
-                            : 'bg-[#0B3D91] text-white border-[#0B3D91] hover:bg-[#0a2e6e]'
-                        }
-                    `}
-                >
-                    {isSatellite
-                        ? <><Map className="w-3.5 h-3.5" /> Street View</>
-                        : <><Satellite className="w-3.5 h-3.5" /> Satellite</>
+                        ? 'bg-white text-[#0B3D91] border-blue-200 hover:bg-blue-50'
+                        : 'bg-[#0B3D91] text-white border-[#0B3D91] hover:bg-[#0a2e6e]'
                     }
-                </button>
-            </div>
+                    `}
+            >
+                {isSatellite
+                    ? <><Map className="w-3.5 h-3.5" /> Street View</>
+                    : <><Satellite className="w-3.5 h-3.5" /> Satellite</>
+                }
+            </button>
+        </div>
 
-            {/* Footer */}
-            <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+        {/* Footer */}
+        <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+            <div className="flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#0B3D91]" />
+                <span>
+                    {shipment.originCity}, {shipment.originCountry}
+                    {shipment.currentCity ? ` → ${shipment.currentCity}, ${shipment.currentCountry}` : ''}
+                    {' → '}{shipment.destinationCity}, {shipment.destinationCountry}
+                </span>
+            </div>
+            <div className="hidden sm:flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-[#0B3D91]" />
-                    <span>
-                        {shipment.originCity}, {shipment.originCountry}
-                        {shipment.currentCity ? ` → ${shipment.currentCity}, ${shipment.currentCountry}` : ''}
-                        {' → '}{shipment.destinationCity}, {shipment.destinationCountry}
-                    </span>
+                    <div className="w-5 h-0.5 bg-[#2563EB]" />
+                    <span>Travelled</span>
                 </div>
-                <div className="hidden sm:flex items-center gap-3">
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-0.5 bg-[#2563EB]" />
-                        <span>Travelled</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-5 border-t-2 border-dashed border-slate-400" />
-                        <span>Remaining</span>
-                    </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-5 border-t-2 border-dashed border-slate-400" />
+                    <span>Remaining</span>
                 </div>
             </div>
         </div>
-    );
+    </div>
+);
 }

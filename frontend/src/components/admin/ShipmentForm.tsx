@@ -255,20 +255,23 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
                     </select>
                 </Field>
 
-                <Field label="Transport Mode">
-                    <select {...register('transportMode')} className={selectCls}>
+                <Field label="Transport Mode" error={errors.transportMode?.message}>
+                    <select {...register('transportMode', { required: 'Transport mode is required' })} className={selectCls}>
                         <option value="land">Land</option>
                         <option value="air">Air</option>
                         <option value="sea">Sea</option>
-                        <option value="rail">Rail</option>
                     </select>
                 </Field>
 
                 <Field label="Contains Pets">
-                    <select {...register('containsPets')} className={selectCls}>
-                        <option value={false}>No</option>
-                        <option value={true}>Yes</option>
-                    </select>
+                    <label className="inline-flex items-center gap-3 mt-1">
+                        <input
+                            type="checkbox"
+                            {...register('containsPets')}
+                            className="h-4 w-4 rounded border-gray-300 text-[#0B3D91] focus:ring-[#0B3D91]"
+                        />
+                        <span className="text-sm text-gray-700">This shipment contains pets</span>
+                    </label>
                 </Field>
 
                 {/* Weight — fixed: two separate fields, no broken flex */}
