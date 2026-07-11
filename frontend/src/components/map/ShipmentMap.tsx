@@ -128,7 +128,7 @@ function distanceKm(a: [number, number], b: [number, number]): number {
     return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-function getRouteStyle(mode: string) {
+function getRouteStyle(mode: string): L.PolylineOptions {
     if (mode === 'air') {
         return { color: '#f97316', weight: 4, opacity: 0.85, dashArray: '8 8', lineCap: 'round' };
     }
