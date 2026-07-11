@@ -46,10 +46,11 @@ const corsOptions = {
             return;
         }
 
-        // Allow any subdomain of swifttrack.com (useful for hosted domains like track.swifttrack.com)
+        // Allow any subdomain of swifttrack.com or swifttrackpro.com
         try {
             const lower = origin.toLowerCase();
-            if (lower.endsWith('.swifttrack.com') || lower.endsWith('swifttrack.com')) {
+            const allowedSuffixes = ['.swifttrack.com', 'swifttrack.com', '.swifttrackpro.com', 'swifttrackpro.com'];
+            if (allowedSuffixes.some(suf => lower.endsWith(suf))) {
                 console.log('CORS allow by domain-match:', origin);
                 callback(null, true);
                 return;
