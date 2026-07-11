@@ -15,17 +15,20 @@ import { prisma } from './lib/prisma';
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT || 5000);
-const HOST = process.env.HOST || '13.49.243.241';
+const PORT: number = Number(process.env.PORT || '5000');
+const HOST_ENV = process.env.HOST?.trim();
+const HOST: string = HOST_ENV || '0.0.0.0';
 
 const configuredOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(o => o.trim()).filter(Boolean);
-const derivedOrigins = [
-    `http://${HOST}`,
-    `https://${HOST}`,
-    `http://${HOST}:80`,
-    `https://${HOST}:443`,
-    `http://${HOST}:5000`,
-].filter(Boolean);
+const derivedOrigins = HOST === '0.0.0.0'
+    ? []
+    : [
+        `http://${HOST}`,
+        `https://${HOST}`,
+        `http://${HOST}:80`,
+        `https://${HOST}:443`,
+        `http://${HOST}:5000`,
+    ];
 const allowedOrigins = Array.from(new Set([...configuredOrigins, ...derivedOrigins]));
 
 // Deployment diagnostics (helpful when troubleshooting remote login failures)
@@ -99,10 +102,19 @@ if (fs.existsSync(clientPath)) {
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, HOST, () => {
-    console.log(`🚀 TrackMaster API running on http://${HOST}:${PORT}`);
-    console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-});
+const startServer = (host: string) => {
+    app.listen(PORT, host, () => {
+        console.log(`🚀 TrackMaster API running on http://${host}:${PORT}`);
+        console.log(`📊 Environment: ${process.env.NODE_ENV}`);
+    });
+};
+
+try {
+    startServer(HOST);
+} catch (err) {
+    console.warn(`Failed to bind to ${HOST}. Falling back to 0.0.0.0`);
+    startServer('0.0.0.0');
+}
 
 // Warm up Prisma client to avoid first-request latency
 (async () => {
