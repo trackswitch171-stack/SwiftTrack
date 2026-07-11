@@ -78,11 +78,10 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
-        const jwtSecret = process.env.JWT_SECRET as Secret | undefined;
-        if (!jwtSecret) {
-            console.error('JWT signing failed: JWT_SECRET is not set');
-            res.status(500).json({ error: 'Server authentication misconfigured' });
-            return;
+        const defaultJwtSecret = 'trackmaster-super-secret-jwt-key-2026-change-in-production';
+        const jwtSecret = (process.env.JWT_SECRET || defaultJwtSecret) as Secret;
+        if (!process.env.JWT_SECRET) {
+            console.warn('JWT_SECRET is not set; using fallback default secret. Set JWT_SECRET in env for production.');
         }
         const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as SignOptions['expiresIn'];
         const signOptions: SignOptions = {
@@ -113,7 +112,7 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
             },
         });
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('Login error:', error instanceof Error ? error.message : JSON.stringify(error));
         res.status(500).json({ error: 'Internal server error' });
     }
 });
