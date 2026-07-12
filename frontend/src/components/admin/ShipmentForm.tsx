@@ -50,7 +50,7 @@ interface Props {
 
 const COUNTRIES = [
     'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria',
-    'Bahrain', 'Bangladesh', 'Belgium', 'Brazil', 'Canada', 'China',
+    'Bahrain', 'Bangladesh', 'Belgium', 'Brazil', 'Cameroon', 'Canada', 'China',
     'Denmark', 'Egypt', 'Ethiopia', 'Finland', 'France', 'Germany',
     'Ghana', 'Greece', 'Hong Kong', 'Hungary', 'India', 'Indonesia',
     'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Jordan',
