@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { Loader2, User, MapPin, Package, Truck, DollarSign, Calendar } from 'lucide-react';
+import { Loader2, User, MapPin, Package, Truck, DollarSign, Calendar, Compass } from 'lucide-react';
 import { ALL_STATUSES, getStatusConfig } from '../../utils/statusHelpers';
 
 interface ShipmentFormData {
@@ -113,10 +114,31 @@ function Field({
 const inputCls = 'w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 bg-white placeholder-gray-400 outline-none transition-all focus:border-[#0B3D91] focus:ring-2 focus:ring-[#0B3D91]/20';
 const selectCls = inputCls + ' cursor-pointer';
 
+async function geocode(address: string) {
+    const encoded = encodeURIComponent(address);
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encoded}`;
+    const res = await fetch(url, {
+        headers: { 'Accept-Language': 'en' },
+    });
+    if (!res.ok) throw new Error('Geocoding API error');
+    const results = await res.json();
+    if (!results || results.length === 0) throw new Error('Address not found');
+    return {
+        lat: parseFloat(results[0].lat),
+        lng: parseFloat(results[0].lon),
+        displayName: results[0].display_name,
+    };
+}
+
 export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submitLabel, isEdit }: Props) {
+    const [isGeoLoading, setIsGeoLoading] = useState(false);
+    const [geoError, setGeoError] = useState<string | null>(null);
+
     const {
         register,
         handleSubmit,
+        setValue,
+        getValues,
         formState: { errors },
     } = useForm<ShipmentFormData>({
         defaultValues: defaultValues || {
