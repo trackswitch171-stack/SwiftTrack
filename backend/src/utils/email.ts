@@ -1,4 +1,8 @@
+import path from 'path';
+import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 type SendMailParams = {
     to: string;
@@ -19,7 +23,8 @@ function getTransporter(): nodemailer.Transporter {
     if (transporter) return transporter;
 
     if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-        throw new Error('SMTP configuration is incomplete. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS.');
+        console.warn('SMTP configuration is incomplete. Email notifications will be skipped. Configure SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS in backend/.env.');
+        throw new Error('SMTP configuration is incomplete. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS in backend/.env.');
     }
 
     transporter = nodemailer.createTransport({
@@ -36,15 +41,20 @@ function getTransporter(): nodemailer.Transporter {
 }
 
 export async function sendMail({ to, subject, html, text }: SendMailParams): Promise<void> {
-    const transport = getTransporter();
+    try {
+        const transport = getTransporter();
 
-    await transport.sendMail({
-        from: process.env.SMTP_FROM || smtpUser,
-        to,
-        subject,
-        text,
-        html,
-    });
+        await transport.sendMail({
+            from: process.env.SMTP_FROM || smtpUser,
+            to,
+            subject,
+            text,
+            html,
+        });
+    } catch (error) {
+        console.error('Failed to send email notification:', error);
+        throw error;
+    }
 }
 
 export function getShipmentCreatedEmail({

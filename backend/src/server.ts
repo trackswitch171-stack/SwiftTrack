@@ -3,6 +3,9 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 import { authRouter } from './routes/auth';
 import { shipmentsRouter } from './routes/shipments';
 import { updatesRouter } from './routes/updates';
@@ -12,8 +15,6 @@ import { settingsRouter } from './routes/settings';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { prisma } from './lib/prisma';
-
-dotenv.config();
 
 const app = express();
 const PORT: number = Number(process.env.PORT || '5000');
@@ -37,6 +38,7 @@ console.log('▶ Allowed CORS origins:', allowedOrigins);
 console.log('▶ NODE_ENV:', process.env.NODE_ENV);
 console.log('▶ JWT_SECRET set:', !!process.env.JWT_SECRET);
 console.log('▶ DATABASE_URL set:', !!process.env.DATABASE_URL);
+console.log('▶ SMTP configured:', !!process.env.SMTP_HOST && !!process.env.SMTP_PORT && !!process.env.SMTP_USER && !!process.env.SMTP_PASS);
 
 // Middleware
 const corsOptions = {

@@ -6,7 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendMail = sendMail;
 exports.getShipmentCreatedEmail = getShipmentCreatedEmail;
 exports.getShipmentStatusUpdateEmail = getShipmentStatusUpdateEmail;
+const path_1 = __importDefault(require("path"));
+const dotenv_1 = __importDefault(require("dotenv"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined;
 const smtpUser = process.env.SMTP_USER;
@@ -17,7 +20,8 @@ function getTransporter() {
     if (transporter)
         return transporter;
     if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-        throw new Error('SMTP configuration is incomplete. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS.');
+        console.warn('SMTP configuration is incomplete. Email notifications will be skipped. Configure SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS in backend/.env.');
+        throw new Error('SMTP configuration is incomplete. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS in backend/.env.');
     }
     transporter = nodemailer_1.default.createTransport({
         host: smtpHost,
@@ -31,14 +35,20 @@ function getTransporter() {
     return transporter;
 }
 async function sendMail({ to, subject, html, text }) {
-    const transport = getTransporter();
-    await transport.sendMail({
-        from: process.env.SMTP_FROM || smtpUser,
-        to,
-        subject,
-        text,
-        html,
-    });
+    try {
+        const transport = getTransporter();
+        await transport.sendMail({
+            from: process.env.SMTP_FROM || smtpUser,
+            to,
+            subject,
+            text,
+            html,
+        });
+    }
+    catch (error) {
+        console.error('Failed to send email notification:', error);
+        throw error;
+    }
 }
 function getShipmentCreatedEmail({ recipientName, trackingNumber, originCity, originCountry, destinationCity, destinationCountry, estimatedDelivery, trackingUrl, }) {
     const subject = `Your shipment has been created: ${trackingNumber}`;
