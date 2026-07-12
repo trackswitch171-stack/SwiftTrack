@@ -260,6 +260,32 @@ exports.shipmentsRouter.put('/:id', async (req, res) => {
                 status: data.status,
             },
         });
+        const recipients = [
+            { email: shipment.senderEmail, name: shipment.senderName, role: 'Sender' },
+            { email: shipment.receiverEmail, name: shipment.receiverName, role: 'Receiver' },
+        ];
+        const frontendBaseUrl = (process.env.FRONTEND_URL || 'https://track.swifttrackpro.com').replace(/\/$/, '');
+        const trackingUrl = `${frontendBaseUrl}/track/${shipment.trackingNumber}`;
+        for (const recipient of recipients) {
+            if (!recipient.email)
+                continue;
+            const { subject, html, text } = (0, email_1.getShipmentStatusUpdateEmail)({
+                recipientName: recipient.name || recipient.role,
+                trackingNumber: shipment.trackingNumber,
+                status: shipment.status,
+                location: shipment.currentCity ? `${shipment.currentCity}, ${shipment.currentCountry || ''}`.trim() : null,
+                description: 'Shipment details were updated.',
+                trackingUrl,
+            });
+            (0, email_1.sendMail)({
+                to: recipient.email,
+                subject,
+                html,
+                text,
+            }).catch(error => {
+                console.error(`Failed to send shipment update email to ${recipient.email}:`, error);
+            });
+        }
         await (0, activityLogger_1.logActivity)({
             adminId: req.admin.id,
             action: 'UPDATE_SHIPMENT',

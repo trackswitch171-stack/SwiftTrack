@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendMail = sendMail;
 exports.getShipmentCreatedEmail = getShipmentCreatedEmail;
+exports.getShipmentStatusUpdateEmail = getShipmentStatusUpdateEmail;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined;
@@ -61,6 +62,31 @@ Hi ${recipientName},\n\n` +
         (estimatedDelivery ? `Estimated delivery: ${estimatedDelivery}\n` : '') +
         `Track your shipment: ${trackingUrl}\n\n` +
         `Thank you for using our service.`;
+    return { subject, html, text };
+}
+function getShipmentStatusUpdateEmail({ recipientName, trackingNumber, status, location, description, trackingUrl, }) {
+    const subject = `Shipment update for ${trackingNumber}: ${status}`;
+    const locationLine = location ? `<p><strong>Current location:</strong> ${location}</p>` : '';
+    const descriptionLine = description ? `<p><strong>Update:</strong> ${description}</p>` : '';
+    const html = `
+        <div style="font-family: Arial, sans-serif; color: #222;">
+            <h2>Shipment Update</h2>
+            <p>Hi ${recipientName},</p>
+            <p>Your shipment <strong>${trackingNumber}</strong> has a new update.</p>
+            <p><strong>Status:</strong> ${status}</p>
+            ${locationLine}
+            ${descriptionLine}
+            <p>You can view the latest tracking details here:</p>
+            <p><a href="${trackingUrl}" target="_blank" rel="noopener">Track shipment</a></p>
+        </div>
+    `;
+    const text = `Shipment Update\n
+Hi ${recipientName},\n\n` +
+        `Your shipment ${trackingNumber} has a new update.\n` +
+        `Status: ${status}\n` +
+        (location ? `Current location: ${location}\n` : '') +
+        (description ? `Update: ${description}\n` : '') +
+        `Track shipment: ${trackingUrl}\n`;
     return { subject, html, text };
 }
 //# sourceMappingURL=email.js.map

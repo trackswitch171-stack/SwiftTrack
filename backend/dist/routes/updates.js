@@ -5,6 +5,7 @@ const express_1 = require("express");
 const prisma_1 = require("../lib/prisma");
 const auth_1 = require("../middleware/auth");
 const activityLogger_1 = require("../utils/activityLogger");
+const email_1 = require("../utils/email");
 exports.updatesRouter = (0, express_1.Router)();
 // POST /api/updates/submit - Submit a pending update (can be used by ops or admin)
 exports.updatesRouter.post('/submit', async (req, res) => {
@@ -99,8 +100,7 @@ exports.updatesRouter.post('/approve/:id', async (req, res) => {
                 approvedAt: new Date(),
             },
         });
-        // Update the shipment status and current location
-        await prisma_1.prisma.shipment.update({
+        const updatedShipment = await prisma_1.prisma.shipment.update({
             where: { id: pending.shipmentId },
             data: {
                 status: pending.status,
@@ -111,6 +111,32 @@ exports.updatesRouter.post('/approve/:id', async (req, res) => {
                 ...(pending.status === 'delivered' ? { actualDelivery: new Date() } : {}),
             },
         });
+        const frontendBaseUrl = (process.env.FRONTEND_URL || 'https://track.swifttrackpro.com').replace(/\/$/, '');
+        const trackingUrl = `${frontendBaseUrl}/track/${pending.shipment.trackingNumber}`;
+        const recipients = [
+            { email: pending.shipment.senderEmail, name: pending.shipment.senderName, role: 'Sender' },
+            { email: pending.shipment.receiverEmail, name: pending.shipment.receiverName, role: 'Receiver' },
+        ];
+        for (const recipient of recipients) {
+            if (!recipient.email)
+                continue;
+            const { subject, html, text } = (0, email_1.getShipmentStatusUpdateEmail)({
+                recipientName: recipient.name || recipient.role,
+                trackingNumber: pending.shipment.trackingNumber,
+                status: updatedShipment.status,
+                location: updatedShipment.currentCity ? `${updatedShipment.currentCity}, ${updatedShipment.currentCountry || ''}`.trim() : null,
+                description: pending.description || 'The shipment status has been updated.',
+                trackingUrl,
+            });
+            (0, email_1.sendMail)({
+                to: recipient.email,
+                subject,
+                html,
+                text,
+            }).catch(error => {
+                console.error(`Failed to send shipment update email to ${recipient.email}:`, error);
+            });
+        }
         // Mark pending update as approved
         await prisma_1.prisma.pendingUpdate.update({
             where: { id: req.params.id },
@@ -194,7 +220,7 @@ exports.updatesRouter.post('/direct/:shipmentId', async (req, res) => {
                 approvedAt: new Date(),
             },
         });
-        await prisma_1.prisma.shipment.update({
+        const updatedShipment = await prisma_1.prisma.shipment.update({
             where: { id: req.params.shipmentId },
             data: {
                 status,
@@ -205,6 +231,32 @@ exports.updatesRouter.post('/direct/:shipmentId', async (req, res) => {
                 ...(status === 'delivered' ? { actualDelivery: new Date() } : {}),
             },
         });
+        const frontendBaseUrl = (process.env.FRONTEND_URL || 'https://track.swifttrackpro.com').replace(/\/$/, '');
+        const trackingUrl = `${frontendBaseUrl}/track/${shipment.trackingNumber}`;
+        const recipients = [
+            { email: shipment.senderEmail, name: shipment.senderName, role: 'Sender' },
+            { email: shipment.receiverEmail, name: shipment.receiverName, role: 'Receiver' },
+        ];
+        for (const recipient of recipients) {
+            if (!recipient.email)
+                continue;
+            const { subject, html, text } = (0, email_1.getShipmentStatusUpdateEmail)({
+                recipientName: recipient.name || recipient.role,
+                trackingNumber: shipment.trackingNumber,
+                status: updatedShipment.status,
+                location: updatedShipment.currentCity ? `${updatedShipment.currentCity}, ${updatedShipment.currentCountry || ''}`.trim() : null,
+                description: description || 'The shipment status has been updated.',
+                trackingUrl,
+            });
+            (0, email_1.sendMail)({
+                to: recipient.email,
+                subject,
+                html,
+                text,
+            }).catch(error => {
+                console.error(`Failed to send shipment update email to ${recipient.email}:`, error);
+            });
+        }
         await (0, activityLogger_1.logActivity)({
             adminId: req.admin.id,
             action: 'ADD_TRACKING_UPDATE',

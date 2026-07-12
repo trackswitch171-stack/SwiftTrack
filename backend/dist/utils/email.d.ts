@@ -19,5 +19,17 @@ export declare function getShipmentCreatedEmail({ recipientName, trackingNumber,
     html: string;
     text: string;
 };
+export declare function getShipmentStatusUpdateEmail({ recipientName, trackingNumber, status, location, description, trackingUrl, }: {
+    recipientName: string;
+    trackingNumber: string;
+    status: string;
+    location?: string | null;
+    description?: string | null;
+    trackingUrl: string;
+}): {
+    subject: string;
+    html: string;
+    text: string;
+};
 export {};
 //# sourceMappingURL=email.d.ts.map

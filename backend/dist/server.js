@@ -13,6 +13,7 @@ const shipments_1 = require("./routes/shipments");
 const updates_1 = require("./routes/updates");
 const dashboard_1 = require("./routes/dashboard");
 const activity_1 = require("./routes/activity");
+const settings_1 = require("./routes/settings");
 const errorHandler_1 = require("./middleware/errorHandler");
 const requestLogger_1 = require("./middleware/requestLogger");
 const prisma_1 = require("./lib/prisma");
@@ -93,6 +94,7 @@ app.use('/api/shipments', shipments_1.shipmentsRouter);
 app.use('/api/updates', updates_1.updatesRouter);
 app.use('/api/dashboard', dashboard_1.dashboardRouter);
 app.use('/api/activity', activity_1.activityRouter);
+app.use('/api/settings', settings_1.settingsRouter);
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
