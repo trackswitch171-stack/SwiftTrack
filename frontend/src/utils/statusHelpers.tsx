@@ -112,6 +112,14 @@ export const STATUS_CONFIG: Record<ShipmentStatus, {
         dotColor: 'bg-gray-500',
         progress: 0,
     },
+    on_hold: {
+        label: 'On Hold',
+        color: '#b45309',
+        bgColor: 'bg-amber-50',
+        textColor: 'text-amber-700',
+        dotColor: 'bg-amber-600',
+        progress: 40,
+    },
 };
 
 export function getStatusConfig(status: string) {
@@ -137,5 +145,5 @@ export function StatusBadge({ status, size = 'md' }: { status: string; size?: 's
 export const ALL_STATUSES: ShipmentStatus[] = [
     'created', 'picked_up', 'in_warehouse', 'customs_cleared',
     'departed_origin', 'in_transit', 'arrived_at_hub', 'customs_import',
-    'out_for_delivery', 'delivered', 'returned', 'delayed', 'cancelled',
+    'out_for_delivery', 'delivered', 'returned', 'delayed', 'cancelled', 'on_hold',
 ];

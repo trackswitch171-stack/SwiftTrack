@@ -134,6 +134,23 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
     const [isGeoLoading, setIsGeoLoading] = useState(false);
     const [geoError, setGeoError] = useState<string | null>(null);
 
+    const geocodeAndFill = async (address: string, city: string, country: string, latField: 'originLat' | 'destinationLat', lngField: 'originLng' | 'destinationLng') => {
+        const fullAddress = [address, city, country].filter(Boolean).join(', ').trim();
+        if (!fullAddress) return;
+
+        try {
+            setIsGeoLoading(true);
+            setGeoError(null);
+            const result = await geocode(fullAddress);
+            setValue(latField, String(result.lat), { shouldDirty: true, shouldTouch: true });
+            setValue(lngField, String(result.lng), { shouldDirty: true, shouldTouch: true });
+        } catch (error) {
+            setGeoError(error instanceof Error ? error.message : 'Unable to determine coordinates');
+        } finally {
+            setIsGeoLoading(false);
+        }
+    };
+
     const {
         register,
         handleSubmit,
@@ -186,6 +203,7 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
                 <Field label="Street Address" required error={errors.senderAddress?.message}>
                     <input
                         {...register('senderAddress', { required: 'Address is required' })}
+                        onBlur={() => geocodeAndFill(getValues('senderAddress'), getValues('senderCity'), getValues('senderCountry'), 'originLat', 'originLng')}
                         className={inputCls}
                         placeholder="123 Main Street"
                     />
@@ -194,6 +212,7 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
                 <Field label="City" required error={errors.senderCity?.message}>
                     <input
                         {...register('senderCity', { required: 'City is required' })}
+                        onBlur={() => geocodeAndFill(getValues('senderAddress'), getValues('senderCity'), getValues('senderCountry'), 'originLat', 'originLng')}
                         className={inputCls}
                         placeholder="New York"
                     />
@@ -202,6 +221,7 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
                 <Field label="Country" required error={errors.senderCountry?.message}>
                     <select
                         {...register('senderCountry', { required: 'Country is required' })}
+                        onBlur={() => geocodeAndFill(getValues('senderAddress'), getValues('senderCity'), getValues('senderCountry'), 'originLat', 'originLng')}
                         className={selectCls}
                     >
                         <option value="">Select a country</option>
@@ -240,6 +260,7 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
                 <Field label="Street Address" required error={errors.receiverAddress?.message}>
                     <input
                         {...register('receiverAddress', { required: 'Address is required' })}
+                        onBlur={() => geocodeAndFill(getValues('receiverAddress'), getValues('receiverCity'), getValues('receiverCountry'), 'destinationLat', 'destinationLng')}
                         className={inputCls}
                         placeholder="456 Business Avenue"
                     />
@@ -248,6 +269,7 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
                 <Field label="City" required error={errors.receiverCity?.message}>
                     <input
                         {...register('receiverCity', { required: 'City is required' })}
+                        onBlur={() => geocodeAndFill(getValues('receiverAddress'), getValues('receiverCity'), getValues('receiverCountry'), 'destinationLat', 'destinationLng')}
                         className={inputCls}
                         placeholder="Dubai"
                     />
@@ -256,6 +278,7 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
                 <Field label="Country" required error={errors.receiverCountry?.message}>
                     <select
                         {...register('receiverCountry', { required: 'Country is required' })}
+                        onBlur={() => geocodeAndFill(getValues('receiverAddress'), getValues('receiverCity'), getValues('receiverCountry'), 'destinationLat', 'destinationLng')}
                         className={selectCls}
                     >
                         <option value="">Select a country</option>
@@ -475,6 +498,9 @@ export default function ShipmentForm({ defaultValues, onSubmit, isLoading, submi
                         placeholder="e.g. 55.2708"
                     />
                 </Field>
+
+                {geoError && <p className="md:col-span-2 text-sm text-amber-600">{geoError}</p>}
+                {isGeoLoading && <p className="md:col-span-2 text-sm text-gray-500">Auto-filling coordinates…</p>}
             </Section>
 
             {/* ── SCHEDULE ── */}

@@ -1,8 +1,10 @@
 import { Menu, Bell } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { updatesApi } from '../../services/api';
+import { updatesApi, settingsApi } from '../../services/api';
 import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { setAppTimezone } from '../../utils/dateFormat';
 
 interface Props {
     onMenuClick: () => void;
@@ -19,6 +21,7 @@ const breadcrumbs: Record<string, string> = {
 export default function AdminTopbar({ onMenuClick }: Props) {
     const { admin } = useAuth();
     const location = useLocation();
+    const [timezone, setTimezoneState] = useState('America/New_York');
 
     const { data: pendingData } = useQuery({
         queryKey: ['pending-updates'],
@@ -28,6 +31,41 @@ export default function AdminTopbar({ onMenuClick }: Props) {
 
     const pendingCount = pendingData?.data?.length || 0;
     const pageTitle = breadcrumbs[location.pathname] || 'SwiftTrack Admin';
+
+    useEffect(() => {
+        const loadTimezone = async () => {
+            try {
+                const saved = window.localStorage.getItem('app.timezone');
+                if (saved) {
+                    setTimezoneState(saved);
+                    setAppTimezone(saved);
+                }
+
+                const response = await settingsApi.getTimezone();
+                const nextTimezone = response.data?.timezone || saved || 'America/New_York';
+                setTimezoneState(nextTimezone);
+                setAppTimezone(nextTimezone);
+                window.localStorage.setItem('app.timezone', nextTimezone);
+            } catch {
+                setTimezoneState('America/New_York');
+            }
+        };
+
+        loadTimezone();
+    }, []);
+
+    const handleTimezoneChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const nextTimezone = event.target.value;
+        setTimezoneState(nextTimezone);
+        setAppTimezone(nextTimezone);
+        window.localStorage.setItem('app.timezone', nextTimezone);
+
+        try {
+            await settingsApi.setTimezone(nextTimezone);
+        } catch {
+            // keep the local preference even if the server update fails
+        }
+    };
 
     return (
         <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 md:px-6 flex-shrink-0 shadow-sm">
@@ -58,6 +96,17 @@ export default function AdminTopbar({ onMenuClick }: Props) {
                         </span>
                     )}
                 </Link>
+
+                <label className="hidden md:flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                    <span className="text-xs font-semibold uppercase tracking-wide">TZ</span>
+                    <select value={timezone} onChange={handleTimezoneChange} className="bg-transparent text-sm font-medium outline-none">
+                        <option value="America/New_York">New York</option>
+                        <option value="America/Chicago">Chicago</option>
+                        <option value="America/Denver">Denver</option>
+                        <option value="America/Los_Angeles">Los Angeles</option>
+                        <option value="UTC">UTC</option>
+                    </select>
+                </label>
 
                 {/* Admin avatar */}
                 <div className="flex items-center gap-2.5">

@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { generateTrackingNumber } from '../utils/trackingNumber';
 import { logActivity } from '../utils/activityLogger';
-import { sendMail, getShipmentCreatedEmail } from '../utils/email';
+import { sendMail, getShipmentCreatedEmail, getShipmentStatusUpdateEmail } from '../utils/email';
 
 export const shipmentsRouter = Router();
 
@@ -288,6 +288,36 @@ shipmentsRouter.put('/:id', async (req: AuthRequest, res: Response): Promise<voi
                 status: data.status,
             },
         });
+
+        const recipients = [
+            { email: shipment.senderEmail, name: shipment.senderName, role: 'Sender' },
+            { email: shipment.receiverEmail, name: shipment.receiverName, role: 'Receiver' },
+        ];
+
+        const frontendBaseUrl = (process.env.FRONTEND_URL || 'https://track.swifttrackpro.com').replace(/\/$/, '');
+        const trackingUrl = `${frontendBaseUrl}/track/${shipment.trackingNumber}`;
+
+        for (const recipient of recipients) {
+            if (!recipient.email) continue;
+
+            const { subject, html, text } = getShipmentStatusUpdateEmail({
+                recipientName: recipient.name || recipient.role,
+                trackingNumber: shipment.trackingNumber,
+                status: shipment.status,
+                location: shipment.currentCity ? `${shipment.currentCity}, ${shipment.currentCountry || ''}`.trim() : null,
+                description: 'Shipment details were updated.',
+                trackingUrl,
+            });
+
+            sendMail({
+                to: recipient.email,
+                subject,
+                html,
+                text,
+            }).catch(error => {
+                console.error(`Failed to send shipment update email to ${recipient.email}:`, error);
+            });
+        }
 
         await logActivity({
             adminId: req.admin!.id,

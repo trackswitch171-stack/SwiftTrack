@@ -60,7 +60,8 @@ export type ShipmentStatus =
     | 'delivered'
     | 'returned'
     | 'delayed'
-    | 'cancelled';
+    | 'cancelled'
+    | 'on_hold';
 
 export interface TrackingUpdate {
     id: string;

@@ -70,6 +70,12 @@ export const updatesApi = {
         api.post(`/updates/direct/${shipmentId}`, data),
 };
 
+// Settings API
+export const settingsApi = {
+    getTimezone: () => api.get('/settings/timezone'),
+    setTimezone: (timezone: string) => api.put('/settings/timezone', { timezone }),
+};
+
 // Dashboard API
 export const dashboardApi = {
     stats: () => api.get('/dashboard/stats'),

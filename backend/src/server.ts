@@ -8,6 +8,7 @@ import { shipmentsRouter } from './routes/shipments';
 import { updatesRouter } from './routes/updates';
 import { dashboardRouter } from './routes/dashboard';
 import { activityRouter } from './routes/activity';
+import { settingsRouter } from './routes/settings';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { prisma } from './lib/prisma';
@@ -95,6 +96,7 @@ app.use('/api/shipments', shipmentsRouter);
 app.use('/api/updates', updatesRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/activity', activityRouter);
+app.use('/api/settings', settingsRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {
