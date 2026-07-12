@@ -10,26 +10,33 @@ const path_1 = __importDefault(require("path"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined;
-const smtpUser = process.env.SMTP_USER;
-const smtpPass = process.env.SMTP_PASS;
-const smtpSecure = process.env.SMTP_SECURE === 'true';
 let transporter = null;
+function getSmtpConfig() {
+    dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
+    return {
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+        secure: process.env.SMTP_SECURE === 'true',
+        from: process.env.SMTP_FROM,
+    };
+}
 function getTransporter() {
     if (transporter)
         return transporter;
-    if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
+    const { host, port, user, pass, secure } = getSmtpConfig();
+    if (!host || !port || !user || !pass) {
         console.warn('SMTP configuration is incomplete. Email notifications will be skipped. Configure SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS in backend/.env.');
         throw new Error('SMTP configuration is incomplete. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS in backend/.env.');
     }
     transporter = nodemailer_1.default.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpSecure,
+        host,
+        port,
+        secure,
         auth: {
-            user: smtpUser,
-            pass: smtpPass,
+            user,
+            pass,
         },
     });
     return transporter;
@@ -37,8 +44,9 @@ function getTransporter() {
 async function sendMail({ to, subject, html, text }) {
     try {
         const transport = getTransporter();
+        const { from } = getSmtpConfig();
         await transport.sendMail({
-            from: process.env.SMTP_FROM || smtpUser,
+            from: from || process.env.SMTP_USER,
             to,
             subject,
             text,
